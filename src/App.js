@@ -1,60 +1,63 @@
 import React, { Component } from 'react';
 import './App.css';
 
-const withLocalStorage = (WrappedComponent)=>{
-  class WithLocalStorage extends Component {
-    get = (key) => {
-      return localStorage.getItem(key)
-    }
+// context
+const AuthContext = React.createContext()
 
-    save = (key,data)=>{
-      return localStorage.setItem(key,data)
-    }
-
-    remove = (key) => {
-      return localStorage.removeItem(key)
-    }
-
-    render() {
-      return <WrappedComponent get = {this.get}
-                               save = {this.save}
-                               remove = {this.remove}
-                               {...this.props} 
-      />
+// Hoc
+const withAuth = (WrappedComponent)=>{
+  class WithAuth extends Component{
+    render(){
+      return (
+        <AuthContext.Consumer>
+          {(context)=>(
+            <WrappedComponent {...this.props} {...context} />
+          )}
+        </AuthContext.Consumer>
+      )
     }
   }
-
-  return WithLocalStorage
+  return WithAuth
 }
 
-class User extends Component{
-
+class App extends Component{
   state = {
-    name : ''
-  }  
-  
-  componentDidMount(){
-    const name = this.props.get('name')
-    
-    if (!name) {
-      this.props.save('name','user_random')
-      this.setState({
-        name : 'user_random'
-      });
-    }else{
-      this.setState({
-        name:this.props.get('name')
-      })
-    }
+    username : 'randomuser'
   }
 
   render(){
-    return (
-      <div>
-        I am {this.state.name}
-      </div> 
+    return( 
+      <AuthContext.Provider value={this.state}>
+        <h1>I'm App</h1>
+        <Navigation />
+        <Profile />
+      </AuthContext.Provider>
     )
   }
 }
 
-export default withLocalStorage(User);
+class NavigationBase extends Component{
+  render (){
+    return (
+      <nav>
+        <a href="#">Home</a>
+        <a href="/kontak">Kontak</a>
+        <br/>
+        <button> Current Login User : {this.props.username}</button>
+      </nav>
+    )
+  }
+}
+
+const Navigation = withAuth(NavigationBase);
+
+class ProfileBase extends Component{
+  render(){
+    return (
+      <h2>Halaman Profile : {this.props.username}</h2>
+    )
+  }
+}
+const Profile = withAuth(ProfileBase)
+
+export default App;
